@@ -28,15 +28,41 @@ names(palmer)
 Descriptive statistics of branch length and number
 
 ```{r branch}
-palmer$branch.means <- rowMeans(palmer[,11:39], na.rm=TRUE) # note: remember to change this if dataset changes
-palmer$branch.means
+palmer$branch.means<- rowMeans(palmer[,11:39], na.rm=TRUE) # note: remember to change this if dataset changes
+print(palmer$branch.means)
 
+# make branch mins col
+palmer$branch.mins<- apply(palmer[,11:39], 1, FUN=min, na.rm=TRUE)
+print(palmer$branch.mins)
+
+# make branch maxs col
+palmer$branch.maxs<- apply(palmer[,11:39], 1, FUN=max, na.rm=TRUE)
+print(palmer$branch.maxs)
+
+# make branch num col
+
+
+# make branch sum col
+palmer$branch.sum<- apply(palmer[,11:39], 1, FUN=sum, na.rm=TRUE)
+print(palmer$branch.sum)
+
+# make object storing summary stats grouped by population
 BranchMeans<- palmer %>%
   group_by(Population) %>%
-  summarize(Mean=mean(branch.means, na.rm=TRUE), SD=sd(branch.means, na.rm=TRUE)) %>%
+  summarize(Min=min(branch.mins, na.rm=TRUE), 
+            Max=max(branch.maxs, na.rm=TRUE), 
+            Mean=mean(branch.means, na.rm=TRUE), 
+            SD=sd(branch.means, na.rm=TRUE),
+            AvSum=mean(branch.sum), 
+            SumSD=sd(branch.sum)) %>%
   arrange(desc(Mean))
 
+# make table of summary stats
 BranchMeansTable<- kable(BranchMeans)
 print(BranchMeansTable)
 ```
+**Note:** could not figure out how to find branch count
 
+# Inflos
+
+Descriptive statistics of branch length and number
