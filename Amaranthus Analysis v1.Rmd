@@ -1,0 +1,42 @@
+---
+title: "Amaranthus Analysis v1"
+author: "Hayley Brackenridge"
+date: '2019-01-24'
+output: html_document
+---
+
+# Preamble
+
+This markdown contains preliminary analysis of *Amaranthus palmeri* data from 2018-2019 greenhouse project. 
+
+```{r load data}
+palmer<- read.csv("Amaranthus Male and Female Harvest Combined Data v4.csv")
+str(palmer)
+palmer$Inflo.length.19<- as.numeric(palmer$Inflo.length.19)
+
+library(ggplot2)
+library(lattice)
+library(dplyr)
+library(knitr)
+
+palmer<- select(palmer, -Notes)
+names(palmer)
+```
+
+# Branches
+
+Descriptive statistics of branch length and number
+
+```{r branch}
+palmer$branch.means <- rowMeans(palmer[,11:39], na.rm=TRUE) # note: remember to change this if dataset changes
+palmer$branch.means
+
+BranchMeans<- palmer %>%
+  group_by(Population) %>%
+  summarize(Mean=mean(branch.means, na.rm=TRUE), SD=sd(branch.means, na.rm=TRUE)) %>%
+  arrange(desc(Mean))
+
+BranchMeansTable<- kable(BranchMeans)
+print(BranchMeansTable)
+```
+
