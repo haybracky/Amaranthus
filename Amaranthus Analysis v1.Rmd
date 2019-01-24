@@ -13,11 +13,16 @@ This markdown contains preliminary analysis of *Amaranthus palmeri* data from 20
 palmer<- read.csv("Amaranthus Male and Female Harvest Combined Data v4.csv")
 str(palmer)
 palmer$Inflo.length.19<- as.numeric(palmer$Inflo.length.19)
+palmer$Inflo.length.59<- as.numeric(palmer$Inflo.length.63)
+palmer$Inflo.length.63<- as.numeric(palmer$Inflo.length.63)
+palmer$Inflo.length.265<- as.numeric(palmer$Inflo.length.265)
+palmer$Inflo.length.278<- as.numeric(palmer$Inflo.length.278)
 
 library(ggplot2)
 library(lattice)
 library(dplyr)
 library(knitr)
+library(IDPmisc)
 
 palmer<- select(palmer, -Notes)
 names(palmer)
@@ -25,9 +30,12 @@ names(palmer)
 
 # Branches
 
-Descriptive statistics of branch length and number
+Summary statistics of branch length and number
 
 ```{r branch}
+
+
+# make branch means col
 palmer$branch.means<- rowMeans(palmer[,11:39], na.rm=TRUE) # note: remember to change this if dataset changes
 print(palmer$branch.means)
 
@@ -46,23 +54,64 @@ print(palmer$branch.maxs)
 palmer$branch.sum<- apply(palmer[,11:39], 1, FUN=sum, na.rm=TRUE)
 print(palmer$branch.sum)
 
-# make object storing summary stats grouped by population
-BranchMeans<- palmer %>%
+# make object storing branch summary stats grouped by population
+BranchSum<- palmer %>%
   group_by(Population) %>%
-  summarize(Min=min(branch.mins, na.rm=TRUE), 
-            Max=max(branch.maxs, na.rm=TRUE), 
+  summarize(AvMin=mean(NaRV.omit(branch.mins)),
+            MinSD=sd(NaRV.omit(branch.mins)),
+            AvMax=mean(NaRV.omit(branch.maxs)),
+            MaxSD=sd(NaRV.omit(branch.maxs)),
             Mean=mean(branch.means, na.rm=TRUE), 
-            SD=sd(branch.means, na.rm=TRUE),
-            AvSum=mean(branch.sum), 
-            SumSD=sd(branch.sum)) %>%
+            MeanSD=sd(branch.means, na.rm=TRUE),
+            AvSum=mean(branch.sum, na.rm=TRUE), 
+            SumSD=sd(branch.sum, na.rm=TRUE)) %>%
   arrange(desc(Mean))
 
-# make table of summary stats
-BranchMeansTable<- kable(BranchMeans)
-print(BranchMeansTable)
+# make table of branch summary stats
+BranchSumTable<- kable(BranchSum)
+print(BranchSumTable)
+
+?NaRV.omit
 ```
 **Note:** could not figure out how to find branch count
 
 # Inflos
 
-Descriptive statistics of branch length and number
+Summary statistics of branch length and number
+
+```{r inflo}
+# make inflo means col
+palmer$inflo.means<- rowMeans(palmer[,41:591], na.rm=TRUE) # note: remember to change this if dataset changes
+print(palmer$branch.means)
+
+# make inflo mins col
+palmer$inflo.mins<- apply(palmer[,41:591], 1, FUN=min, na.rm=TRUE)
+print(palmer$inflo.mins)
+
+# make inflo maxs col
+palmer$inflo.maxs<- apply(palmer[,41:591], 1, FUN=max, na.rm=TRUE)
+print(palmer$inflo.maxs)
+
+# make inflo num col
+
+
+# make inflo sum col
+palmer$inflo.sum<- apply(palmer[,41:591], 1, FUN=sum, na.rm=TRUE)
+print(palmer$inflo.sum)
+
+# make object storing inflo summary stats grouped by population
+InfloSum<- palmer %>%
+  group_by(Population) %>%
+  summarize(Min=min(inflo.mins, na.rm=TRUE), 
+            Max=max(inflo.maxs, na.rm=TRUE), 
+            Mean=mean(inflo.means, na.rm=TRUE), 
+            SD=sd(inflo.means, na.rm=TRUE),
+            AvSum=mean(inflo.sum, na.rm=TRUE), 
+            SumSD=sd(inflo.sum, na.rm=TRUE)) %>%
+  arrange(desc(Mean))
+
+# make table of branch summary stats
+InfloSumTable<- kable(InfloSum)
+print(InfloSumTable)
+```
+
