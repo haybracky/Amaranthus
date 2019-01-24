@@ -30,11 +30,11 @@ names(palmer)
 
 # Branches
 
+## Sum stats
+
 Summary statistics of branch length and number
 
-```{r branch}
-
-
+```{r branch sum stats}
 # make branch means col
 palmer$branch.means<- rowMeans(palmer[,11:39], na.rm=TRUE) # note: remember to change this if dataset changes
 print(palmer$branch.means)
@@ -71,15 +71,55 @@ BranchSum<- palmer %>%
 BranchSumTable<- kable(BranchSum)
 print(BranchSumTable)
 
-?NaRV.omit
+# summary stats grouping by sex
+BranchbySexSum<- palmer %>%
+  group_by(Population, Sex) %>%
+  summarize(AvMin=mean(NaRV.omit(branch.mins)),
+            MinSD=sd(NaRV.omit(branch.mins)),
+            AvMax=mean(NaRV.omit(branch.maxs)),
+            MaxSD=sd(NaRV.omit(branch.maxs)),
+            Mean=mean(branch.means, na.rm=TRUE), 
+            MeanSD=sd(branch.means, na.rm=TRUE),
+            AvSum=mean(branch.sum, na.rm=TRUE), 
+            SumSD=sd(branch.sum, na.rm=TRUE)) %>%
+  arrange(Population)
+
+BranchbySexSumTable<-kable(BranchbySexSum)
+print(BranchbySexSumTable)
 ```
 **Note:** could not figure out how to find branch count
 
+## models
+
+modelling branch measurements against other variables
+
+```{r branch mod}
+branchmod1<- lm(branch.means~Population, data=palmer)
+summary(branchmod1)
+
+branchmod2<- lm(branch.means~Sex, data=palmer)
+summary(branchmod2)
+
+branchmod3<- lm(branch.means~Population+Sex, data=palmer)
+summary(branchmod3)
+```
+
+
+## qplots
+
+qplots comparing branches
+
+```{r branch plots}
+
+```
+
 # Inflos
+
+## Sum stats 
 
 Summary statistics of branch length and number
 
-```{r inflo}
+```{r inflo sum stats}
 # make inflo means col
 palmer$inflo.means<- rowMeans(palmer[,41:591], na.rm=TRUE) # note: remember to change this if dataset changes
 print(palmer$branch.means)
@@ -102,16 +142,51 @@ print(palmer$inflo.sum)
 # make object storing inflo summary stats grouped by population
 InfloSum<- palmer %>%
   group_by(Population) %>%
-  summarize(Min=min(inflo.mins, na.rm=TRUE), 
-            Max=max(inflo.maxs, na.rm=TRUE), 
+  summarize(AvMin=mean(NaRV.omit(inflo.mins)),
+            MinSD=sd(NaRV.omit(inflo.mins)),
+            AvMax=mean(NaRV.omit(inflo.maxs)),
+            MaxSD=sd(NaRV.omit(inflo.maxs)),
             Mean=mean(inflo.means, na.rm=TRUE), 
-            SD=sd(inflo.means, na.rm=TRUE),
+            MeanSD=sd(inflo.means, na.rm=TRUE),
             AvSum=mean(inflo.sum, na.rm=TRUE), 
             SumSD=sd(inflo.sum, na.rm=TRUE)) %>%
   arrange(desc(Mean))
 
-# make table of branch summary stats
+# make table of inflo summary stats
 InfloSumTable<- kable(InfloSum)
 print(InfloSumTable)
+
+# summary stats grouping by sex
+InflobySexSum<- palmer %>%
+  group_by(Population, Sex) %>%
+   summarize(AvMin=mean(NaRV.omit(inflo.mins)),
+            MinSD=sd(NaRV.omit(inflo.mins)),
+            AvMax=mean(NaRV.omit(inflo.maxs)),
+            MaxSD=sd(NaRV.omit(inflo.maxs)),
+            Mean=mean(inflo.means, na.rm=TRUE), 
+            MeanSD=sd(inflo.means, na.rm=TRUE),
+            AvSum=mean(inflo.sum, na.rm=TRUE), 
+            SumSD=sd(inflo.sum, na.rm=TRUE)) %>%
+  arrange(Population)
+
+InflobySexSumTable<-kable(InflobySexSum)
+print(InflobySexSumTable)
 ```
 
+## models
+
+modelling inflo measurements against other variables 
+
+```{r inflo mod}
+inflomod1<- lm(inflo.means~Population, data=palmer)
+summary(inflomod1)
+
+inflomod2<- lm(inflo.means~Sex, data=palmer)
+summary(inflomod2)
+
+inflomod3<- lm(inflo.means~Population+Sex, data=palmer)
+summary(inflomod3)
+```
+
+
+## qplots
