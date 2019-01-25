@@ -71,7 +71,7 @@ BranchSum<- palmer %>%
 BranchSumTable<- kable(BranchSum)
 print(BranchSumTable)
 
-# summary stats grouping by sex
+# summary stats grouping by sex & pop'n
 BranchbySexSum<- palmer %>%
   group_by(Population, Sex) %>%
   summarize(AvMin=mean(NaRV.omit(branch.mins)),
@@ -94,14 +94,14 @@ print(BranchbySexSumTable)
 modelling branch measurements against other variables
 
 ```{r branch mod}
-branchmod1<- lm(branch.means~Population, data=palmer)
-summary(branchmod1)
+Branchmod1<- lm(branch.means~Population, data=palmer)
+summary(Branchmod1)
 
-branchmod2<- lm(branch.means~Sex, data=palmer)
-summary(branchmod2)
+Branchmod2<- lm(branch.means~Sex, data=palmer)
+summary(Branchmod2)
 
-branchmod3<- lm(branch.means~Population+Sex, data=palmer)
-summary(branchmod3)
+Branchmod3<- lm(branch.means~Population+Sex, data=palmer)
+summary(Branchmod3)
 ```
 
 
@@ -117,7 +117,7 @@ qplots comparing branches
 
 ## Sum stats 
 
-Summary statistics of branch length and number
+Summary statistics of inflo length and number
 
 ```{r inflo sum stats}
 # make inflo means col
@@ -156,7 +156,7 @@ InfloSum<- palmer %>%
 InfloSumTable<- kable(InfloSum)
 print(InfloSumTable)
 
-# summary stats grouping by sex
+# summary stats grouping by sex & pop'n
 InflobySexSum<- palmer %>%
   group_by(Population, Sex) %>%
    summarize(AvMin=mean(NaRV.omit(inflo.mins)),
@@ -178,15 +178,116 @@ print(InflobySexSumTable)
 modelling inflo measurements against other variables 
 
 ```{r inflo mod}
-inflomod1<- lm(inflo.means~Population, data=palmer)
-summary(inflomod1)
+Inflomod1<- lm(inflo.means~Population, data=palmer)
+summary(Inflomod1)
 
-inflomod2<- lm(inflo.means~Sex, data=palmer)
-summary(inflomod2)
+Inflomod2<- lm(inflo.means~Sex, data=palmer)
+summary(Inflomod2)
 
-inflomod3<- lm(inflo.means~Population+Sex, data=palmer)
-summary(inflomod3)
+Inflomod3<- lm(inflo.means~Population+Sex, data=palmer)
+summary(Inflomod3)
 ```
 
 
 ## qplots
+
+qplots comparing inflos
+
+```{r inflo plots}
+
+```
+
+
+# Stem height & diameter
+
+## Sum stats 
+
+Summary statistics of stem height and diameter
+
+```{r stem sum stats}
+# make object storing height summary stats grouped by population
+HtSum<- palmer %>%
+  group_by(Population) %>%
+  summarize(Min=min(NaRV.omit(Primary.Stem.Ht.3)),
+            Max=max(NaRV.omit(Primary.Stem.Ht.3)),
+            Mean=mean(Primary.Stem.Ht.3, na.rm=TRUE), 
+            SD=sd(Primary.Stem.Ht.3, na.rm=TRUE)) %>%
+  arrange(desc(Mean))
+
+# make table of height summary stats
+HtSumTable<- kable(HtSum)
+print(HtSumTable)
+
+# summary stats grouping by sex & pop'n
+HtbySexSum<- palmer %>%
+  group_by(Population, Sex) %>%
+    summarize(Min=min(NaRV.omit(Primary.Stem.Ht.3)),
+            Max=max(NaRV.omit(Primary.Stem.Ht.3)),
+            Mean=mean(Primary.Stem.Ht.3, na.rm=TRUE), 
+            SD=sd(Primary.Stem.Ht.3, na.rm=TRUE)) %>%
+  arrange(Population)
+
+HtbySexSumTable<-kable(HtbySexSum)
+print(HtbySexSumTable)
+
+# make object storing diameter summary stats grouped by population
+DiamSum<- palmer %>%
+  group_by(Population) %>%
+  summarize(Min=min(NaRV.omit(Base.Stem.Diameter)),
+            Max=max(NaRV.omit(Base.Stem.Diameter)),
+            Mean=mean(Base.Stem.Diameter, na.rm=TRUE), 
+            SD=sd(Base.Stem.Diameter, na.rm=TRUE)) %>%
+  arrange(desc(Mean))
+
+# make table of diameter summary stats
+DiamSumTable<- kable(DiamSum)
+print(DiamSumTable)
+
+# summary stats grouping by sex & pop'n
+DiambySexSum<- palmer %>%
+  group_by(Population, Sex) %>%
+    summarize(Min=min(NaRV.omit(Base.Stem.Diameter)),
+            Max=max(NaRV.omit(Base.Stem.Diameter)),
+            Mean=mean(Base.Stem.Diameter, na.rm=TRUE), 
+            SD=sd(Base.Stem.Diameter, na.rm=TRUE)) %>%
+  arrange(Population)
+
+DiambySexSumTable<-kable(DiambySexSum)
+print(DiambySexSumTable)
+```
+
+## models
+
+modelling stem measurements against other variables 
+
+```{r stem mod}
+# Height models
+Htmod1<- lm(Primary.Stem.Ht.3~Population, data=palmer)
+summary(Htmod1)
+
+Htmod2<- lm(Primary.Stem.Ht.3~Sex, data=palmer)
+summary(Htmod2)
+
+Htmod3<- lm(Primary.Stem.Ht.3~Population+Sex, data=palmer)
+summary(Htmod3)
+
+# Diameter models
+Diammod1<- lm(Base.Stem.Diameter~Population, data=palmer)
+summary(Diammod1)
+
+Diammod2<- lm(Base.Stem.Diameter~Sex, data=palmer)
+summary(Diammod2)
+
+Diammod3<- lm(Base.Stem.Diameter~Population+Sex, data=palmer)
+summary(Diammod3)
+```
+
+
+## qplots
+
+qplots comparing inflos
+
+```{r inflo plots}
+
+```
+
