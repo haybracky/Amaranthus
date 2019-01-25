@@ -188,7 +188,6 @@ Inflomod3<- lm(inflo.means~Population+Sex, data=palmer)
 summary(Inflomod3)
 ```
 
-
 ## qplots
 
 qplots comparing inflos
@@ -282,12 +281,104 @@ Diammod3<- lm(Base.Stem.Diameter~Population+Sex, data=palmer)
 summary(Diammod3)
 ```
 
-
 ## qplots
 
 qplots comparing stem height and diameter
 
 ```{r stem plots}
 
+```
+
+# Axillary Inflos
+
+## Sum stats
+
+Summary statistics of axillary inflos
+
+```{r axillary sum stats}
+# make object storing axillary summary stats grouped by population
+AxSum<- palmer %>%
+  group_by(Population) %>%
+  summarize(Min=min(Num.Axillary.Flws, na.rm=TRUE),
+            Max=mean(Num.Axillary.Flws, na.rm=TRUE),
+            Mean=mean(Num.Axillary.Flws, na.rm=TRUE), 
+            SD=sd(Num.Axillary.Flws, na.rm=TRUE)) %>%
+  arrange(desc(Mean))
+
+# make table of branch summary stats
+AxSumTable<- kable(AxSum)
+print(AxSumTable)
+
+# summary stats grouping by sex & pop'n
+AxbySexSum<- palmer %>%
+  group_by(Population, Sex) %>%
+  summarize(Min=min(Num.Axillary.Flws, na.rm=TRUE),
+            Max=mean(Num.Axillary.Flws, na.rm=TRUE),
+            Mean=mean(Num.Axillary.Flws, na.rm=TRUE), 
+            SD=sd(Num.Axillary.Flws, na.rm=TRUE)) %>%
+  arrange(Population)
+
+AxbySexSumTable<-kable(AxbySexSum)
+print(AxbySexSumTable)
+```
+
+## models
+
+modelling axillary number against other variables
+
+```{r axillary mod}
+Axmod1<- lm(Num.Axillary.Flws~Population, data=palmer)
+summary(Axmod1)
+
+Axmod2<- lm(Num.Axillary.Flws~Sex, data=palmer)
+summary(Axmod2)
+
+Axmod3<- lm(Num.Axillary.Flws~Population+Sex, data=palmer)
+summary(Axmod3)
+```
+
+## qplots
+
+qplots comparing branches
+
+```{r axillary plots}
+
+```
+
+
+# Methods
+
+```{r for methods}
+# number of families (total)
+fam<- palmer %>%
+  group_by(Population, Family)
+summarize(fam)
+
+# number of populations 
+pop<- palmer %>%
+  group_by(Population)
+summarize(pop)
+
+# mean number families per population
+FAM<- c(8,9,9,8,9,10,8,9,10,7,9,10,7,8,8,10,9,10,10,9,8,9)
+mean(FAM)
+
+# mean number individuals per family
+ind<- palmer %>%
+  group_by(Population, Family) %>%
+  summarize(num_ind=length(Population))
+print(ind)
+meanind<- mean(ind$num_ind)
+print(meanind)
+
+# mean number bags per female
+bag<- c(3,2,1,4,1,2,3,1,3,2,1,2,3,1,1,3,3,1,1,3,1,1,1,1,1,3,3,1,2,3,3,3,1,1,3,1,3,3,3,1,1,3,3,1,2,3,3,2,1,3,1,3,3,3,1,3,3,3,3,3,1,3,3,3,1,2,1,3,2,3,1,2,1,2,1,1,3,3,2,3,3,1,1,2,3,3,3,3,3,3,1,1,2,1,1,1,1,3,1,1,3,3,3,1,1,3,3,2,2,1,1,2,3,3,3,1,1,2,2,1,3,1,3,2,3,1,1,1,1,1,3,2,3,3,2,3,1,3,3,3,1,1,1,1,1,1,1,2,3,2,2,3,1,1,3,1)
+meanbag<- mean(bag)
+print(meanbag)
+
+# number of bagged females
+Fbag<- subset(palmer, Bag=="Y")
+Nobag<- subset(palmer, Bag=="N")
+FNobag<- subset(Nobag, Sex=="F")
 ```
 
