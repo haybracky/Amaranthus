@@ -2,7 +2,6 @@
 
 library(dplyr)
 dimph<- read.csv("Amaranthus Male and Female Harvest Combined Data v4.csv")
-dimph<- select(dimph, -Notes) # remove the notes col
 dimph<- subset(dimph, Sex=="M" | Sex=="F") # remove the group containing sex=NA
 dimph$Date<- as.character(dimph$Date)
 dimph$Date<- as.Date(dimph$Date) # change data format
@@ -15,14 +14,15 @@ dimph <- transform(dimph, Population=reorder(Population, Latitude)) # order pop'
 # Inflo sum & count
 # remove plants that did not have inflos recorded
 fulldimph<- dimph[!is.na(dimph$Base.Stem.Diameter),]
-fulldimph$inflo.sum<- apply(fulldimph[,41:591], 1, FUN=sum, na.rm=TRUE) # sum (i.e. total reproductive structure)
-fulldimph$inflo.num <- 551-(apply(fulldimph[,41:591], 1, function(x) sum(is.na(x)))) # num inflos
-# na.rm okay here b/c no recorded plants had 0 inflos
+names(fulldimph)
+fulldimph$inflo.sum<- apply(fulldimph[,42:592], 1, FUN=sum, na.rm=TRUE) # sum (i.e. total reproductive structure)
+fulldimph$inflo.num <- 551-(apply(fulldimph[,42:592], 1, function(x) sum(is.na(x)))) # num inflos
 
 # branch sum
-# can't use na.rm here b/c some plants have no branches >20cm (this is biologically significant)
-fulldimph[is.na(fulldimph[,11:39])]<- 0
-fulldimph$branch.sum<- apply(fulldimph[,11:39], 1, FUN=sum, )
+fulldimphbranches<-fulldimph[,c(1:3,6,12:39)]
+fulldimphbranches[is.na(fulldimphbranches)]<- 0
+names(fulldimphbranches)
+fulldimphbranches$branch.sum<- apply(fulldimphbranches[,7:32], 1, FUN=sum)
 
 library(Rmisc)
 # HEIGHT
@@ -43,9 +43,10 @@ dimphInfSumsum <- summarySE(fulldimph, measurevar="inflo.sum", groupvars=c("Sex"
 dimphInfSumsum
 # BRANCHES
 ## num branches >20cm
-nzdimph<- fulldimph
+nzdimph<- fulldimphbranches
 nzdimph$nzbranch<- ifelse(nzdimph$branch.sum>0, 1, 0) # make col of zero vs non-zero data
-
+dimphBranchnzsum <- summarySE(nzdimph, measurevar="nzbranch", groupvars=c("Sex"), na.rm=TRUE) # summary statistics of branch sum
+dimphBranchnzsum
 ## branch length
-dimphBranchsum <- summarySE(fulldimph, measurevar="branch.sum", groupvars=c("Sex"), na.rm=TRUE) # summary statistics of branch sum
+dimphBranchsum <- summarySE(fulldimphbranches, measurevar="branch.sum", groupvars=c("Sex"), na.rm=TRUE) # summary statistics of branch sum
 dimphBranchsum

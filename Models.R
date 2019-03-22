@@ -1,7 +1,8 @@
+## DIMORPHISM MODELS ##
+
 library(dplyr)
 # DIMORPHISM DATA
 dimph<- read.csv("Amaranthus Male and Female Harvest Combined Data v4.csv")
-dimph<- select(dimph, -Notes) # remove the notes col
 dimph<- subset(dimph, Sex=="M" | Sex=="F") # remove the group containing sex=NA
 dimph$Date<- as.character(dimph$Date)
 dimph$Date<- as.Date(dimph$Date) # change data format
@@ -16,11 +17,15 @@ dimph <- transform(dimph, Population=reorder(Population, Latitude)) # order pop'
 # Inflo sum & count
 # remove plants that did not have inflos recorded
 fulldimph<- dimph[!is.na(dimph$Base.Stem.Diameter),]
-fulldimph$inflo.sum<- apply(fulldimph[,41:591], 1, FUN=sum, na.rm=TRUE) # sum (i.e. total reproductive structure)
-fulldimph$inflo.num <- 551-(apply(fulldimph[,41:591], 1, function(x) sum(is.na(x)))) # num inflos
+names(fulldimph)
+fulldimph$inflo.sum<- apply(fulldimph[,42:592], 1, FUN=sum, na.rm=TRUE) # sum (i.e. total reproductive structure)
+fulldimph$inflo.num <- 551-(apply(fulldimph[,42:592], 1, function(x) sum(is.na(x)))) # num inflos
 
 # branch sum
-fulldimph$branch.sum<- apply(fulldimph[,11:39], 1, FUN=sum, na.rm=TRUE)
+fulldimphbranches<-fulldimph[,c(1:3,6,12:39)]
+fulldimphbranches[is.na(fulldimphbranches)]<- 0
+names(fulldimphbranches)
+fulldimphbranches$branch.sum<- apply(fulldimphbranches[,7:32], 1, FUN=sum)
 
 # MIXED MODELS
 library(car)
@@ -172,7 +177,7 @@ plot_model(Branchlmm1, type="diag")
 # test statistics
 # these are not well met b/c lots of zero data
 ## make 2 glmm's with binary zero & continuous non-zero data
-nzdimph<- fulldimph
+nzdimph<- fulldimphbranches
 nzdimph$nzbranch<- ifelse(nzdimph$branch.sum>0, 1, 0) # make col of zero vs non-zero data
 # zero data model:
 zibranch1 <- glmer(nzbranch ~ Sex + (1 | Population), data = nzdimph, family = binomial(link = logit)) # model of zero data
@@ -185,8 +190,8 @@ anova(zibranchnull, zibranch1) # model comparison
 # non-zero data model:
 zibranch2 <- glmer(branch.sum ~ Sex + (1 | Population), data = subset(nzdimph, nzbranch == 1), family = Gamma(link = log))
 zibranch4<- glmer(branch.sum ~ Sex + (Sex | Population), data=subset(nzdimph, nzbranch ==1), family = Gamma(link=log))
-anova(zibranch2, zibranch4) # Sex * Population significant
-summary(zibranch4)
-anova(zibranch4) # model stats
+anova(zibranch2, zibranch4) # interaction not significant
+summary(zibranch2)
+anova(zibranch2) # model stats
 zibranchnull2<- glmer(branch.sum ~ 1 + (1 | Population), data=subset(nzdimph, nzbranch == 1), family = Gamma(link=log)) # null model
-anova(zibranchnull2, zibranch4) # model comparison
+anova(zibranchnull2, zibranch2) # model comparison
