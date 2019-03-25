@@ -10,6 +10,8 @@ str(dimph)
 names(dimph)
 
 # add lat
+lat<- read.csv("Population Locations.csv") # read in lat datasheet
+lat<- dplyr::select(lat, Population, Latitude)
 library(plyr)
 dimph <- join(dimph, lat, by = c("Population")) # add lat col
 dimph <- transform(dimph, Population=reorder(Population, Latitude)) # order pop'n by lat
@@ -24,8 +26,13 @@ fulldimph$inflo.num <- 551-(apply(fulldimph[,42:592], 1, function(x) sum(is.na(x
 # branch sum
 fulldimphbranches<-fulldimph[,c(1:3,6,12:39)]
 fulldimphbranches[is.na(fulldimphbranches)]<- 0
-names(fulldimphbranches)
+names(fulldimphbranches) # this doesn't have lat
 fulldimphbranches$branch.sum<- apply(fulldimphbranches[,7:32], 1, FUN=sum)
+fulldimphbranches$Latitude<- fulldimph$Latitude # re-add lat
+
+# inconsistent axillary data collection, remove data before May 9th
+newdimph<- dimph[dimph$Date >"2018-05-09",] # remove dates (before 2018-05-09)
+str(newdimph)
 
 # MIXED MODELS
 library(car)
@@ -158,19 +165,19 @@ plot_model(InfSumlmm1, type="diag")
 
 # branch sum w/ transofmration
 # step function to find best model
-Branchlmm<- lmer(branch.sum ~ Sex * Latitude + Sex + Latitude + (1 | Population), data=fulldimph, REML=F)
+Branchlmm<- lmer(branch.sum ~ Sex * Latitude + Sex + Latitude + (1 | Population), data=fulldimphbranches, REML=F)
 step(Branchlmm)
 # did not work
-Branchlmm1<- lmer(branch.sum ~ Sex + (1 | Population), data=fulldimph, REML=F) # best model
+Branchlmm1<- lmer(branch.sum ~ Sex + (1 | Population), data=fulldimphbranches, REML=F) # best model
 summary(Branchlmm1)
-Branchlmm2<- lmer(branch.sum ~ Sex * (1 | Population), data=fulldimph, REML=F)
+Branchlmm2<- lmer(branch.sum ~ Sex * (1 | Population), data=fulldimphbranches, REML=F)
 summary(Branchlmm2)
 anova(Branchlmm1, Branchlmm2)
-Branchlmm4<- lmer(branch.sum ~ Sex * Latitude + (1 | Population), data=fulldimph, REML=F)
+Branchlmm4<- lmer(branch.sum ~ Sex * Latitude + (1 | Population), data=fulldimphbranches, REML=F)
 summary(Branchlmm4)
 anova(Branchlmm1, Branchlmm4) # lat not signif
 anova(Branchlmm1) # model stats
-Branchlmm3<- lmer(branch.sum ~ 1 + (1 | Population), data=fulldimph, REML=F)
+Branchlmm3<- lmer(branch.sum ~ 1 + (1 | Population), data=fulldimphbranches, REML=F)
 anova(Branchlmm1, Branchlmm3) # model comparison
 # test assumptions
 plot_model(Branchlmm1, type="diag")
