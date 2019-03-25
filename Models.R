@@ -87,7 +87,13 @@ anova(Diamlmm1, Diamlmm6) # no different
 plot_model(Diamlmm1, type="diag")
 # residuals not normal, two peaks
 Diamlmm3<- lmer(Base.Stem.Diameter ~ (1|Population)+(1|Sex), data=dimph, REML=F)
-summary(Diamlmm3)
+summary(Diamlmm3)                              
+
+# An alternate R package that provides P value for your fixed effect, Sex                                  
+library(lmerTest)
+x<-lmer(Base.Stem.Diameter ~ Sex + (1|Population), data = dimph)
+print(anova(x))
+summary(x)
 
 # axillaries w/ transformation
 # note: data not normal, diff transformations tried
@@ -120,6 +126,13 @@ anova(Axlmm3)
 Axlmm4<- lmer((Num.Axillary.Flws)^(1/3) ~ 1 + (1 | Population), data=newdimph, REML=F)
 anova(Axlmm3, Axlmm4) # model comparision
 
+# Axillary flowers is a count variable, therefore a poisson distribution is most appropriate which can be modeled
+# using a generalized linear (mixed model) in lme4, glmer
+hist((newdimph$Num.Axillary.Flws))
+Axlmm1<- glmer((Num.Axillary.Flws) ~ Sex + (1 | Population), data=newdimph, family=poisson)
+summary(Axlmm1)                   
+                                  
+                                  
 # inflo num w/ transformation
 # step function to find best model
 InfNumlmm<- lmer(sqrt(inflo.num) ~ Sex * Latitude + Sex + Latitude + (1 | Population), data=fulldimph, REML=F)
@@ -141,6 +154,12 @@ anova(InfNumlmm6, InfNumlmm1) # not different
 # test assumptions
 plot_model(InfNumlmm1, type="diag")
 # residuals not normal, peak too high
+                                  
+#inflo number (count) analyzed with glmer with poisson distribution
+InfNumlmm1<- glmer(inflo.num ~ Sex + (1 | Population), data=fulldimph, family=poisson) # best model
+summary(InfNumlmm1)                                  
+                                  
+                                  
 
 # inflo sum w/ transformation
 # step function to find best model
@@ -162,6 +181,12 @@ anova(InfSumlmm1, InfSumlmm4) # lat not signif
 # test assumptions
 plot_model(InfSumlmm1, type="diag")
 # assumptions met well
+
+# To be honest I am not sure why this one is not providing a P value (continuous data not count data), but again using the lmer.test seems to help
+library(lmerTest)
+x<-lmer(sqrt(inflo.sum) ~ Sex + (1|Population), data = fulldimph, REML=F)
+print(anova(x))
+summary(x)
 
 # branch sum w/ transofmration
 # step function to find best model
