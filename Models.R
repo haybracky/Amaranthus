@@ -21,6 +21,7 @@ dimph <- transform(dimph, Population=reorder(Population, Latitude)) # order pop'
 fulldimph<- dimph[!is.na(dimph$Base.Stem.Diameter),]
 names(fulldimph)
 fulldimph$inflo.sum<- apply(fulldimph[,42:592], 1, FUN=sum, na.rm=TRUE) # sum (i.e. total reproductive structure)
+###NOTE: this function will not work if there are other objects with this name. If error occurs, clear environment
 fulldimph$inflo.num <- 551-(apply(fulldimph[,42:592], 1, function(x) sum(is.na(x)))) # num inflos
 
 # branch sum
@@ -56,11 +57,15 @@ anova(Htlmm1,Htlmm2) # no statistical diff btwn models
 Htlmm4<- lmer(Primary.Stem.Ht.3 ~ Sex * Latitude + (1 | Population), data = dimph, REML=F)
 anova(Htlmm1,Htlmm4)
 Htlmm5<- lmer(Primary.Stem.Ht.3 ~ Sex + (Sex | Population), data=dimph, REML=F)
+summary(Htlmm5)
 anova(Htlmm5, Htlmm1) # no effect of Sex*Population interaction
 # no signif effect of lat
 # test assumptions
 plot_model(Htlmm1, type="diag")
 # assumptions met
+
+Htlmm6<- lmer(Primary.Stem.Ht.3 ~ Sex +(1 | Sex:Population), data=dimph, REML=F)
+anova(Htlmm6, Htlmm1)
 
 # stem diam
 # note: data normal
@@ -227,3 +232,10 @@ summary(zibranch2)
 anova(zibranch2) # model stats
 zibranchnull2<- glmer(branch.sum ~ 1 + (1 | Population), data=subset(nzdimph, nzbranch == 1), family = Gamma(link=log)) # null model
 anova(zibranchnull2, zibranch2) # model comparison
+
+#branch means
+## total mean (incl. zeros)
+mean(fulldimphbranches$branch.sum) #96.45
+## mean w/o zeros
+mean(subset(nzdimph, nzbranch==1)$branch.sum) #210.85
+## binary diff ???
