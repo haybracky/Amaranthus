@@ -186,6 +186,27 @@ anova(InfSumlmm1, InfSumlmm4) # lat not signif
 # test assumptions
 plot_model(InfSumlmm1, type="diag")
 # assumptions met well
+                                  
+# A different approach to coding the interaction between sex and population - I think this is closer as the output for
+# random effects is giving the effect of latitude and latitude : sex
+InfSumlmm2<- lmer(sqrt(inflo.sum) ~ Sex + (1 | Population) + (1 | Sex : Population), data=fulldimph, REML=F) # best model
+summary(InfSumlmm2)
+anova(InfSumlmm2)
+
+# no significant interaction between population and sex
+anova(InfSumlmm1,InfSumlmm2)
+                                  
+# To test the effect of population:
+InfSumlm<- lm(sqrt(inflo.sum) ~ Sex, data=fulldimph) # best model
+summary(InfSumlm)
+
+# Not allowing to compare a lm and lmer
+anova(InfSumlm, InfSumlmm1)
+
+# But based on comparison of AIC there is support for a significant effect of population (the lm model 
+# without population has a higher AIC value - ie: less fit than the lmm)
+AIC(InfSumlm, InfSumlmm1)
+                                  
 
 # To be honest I am not sure why this one is not providing a P value (continuous data not count data), but again using the lmer.test seems to help
 library(lmerTest)
