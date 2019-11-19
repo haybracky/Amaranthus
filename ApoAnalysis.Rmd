@@ -1,0 +1,355 @@
+---
+title: "ApoAnalysis"
+author: "Hayley Brackenridge"
+date: '2019-03-22'
+output: html_document
+---
+
+## Data manipulation
+```{r Data manipulation}
+library(plyr)
+apo<- read.csv("Mod_F_Harvestv2.csv")
+str(apo)
+Apo<- dplyr::select(apo, Population, Family, Individual, Bag, Tot.Seed, Num.Inflo.w.Seed)
+ApoB<- subset(Apo, Bag=="Y") # subset for bagged individuals
+# remove pop'ns w/ small num
+ApoB <- ApoB[ !(ApoB$Population %in% "MA-GA"), ]
+ApoB <- ApoB[ !(ApoB$Population %in% "MR-NC"), ]
+ApoB <- ApoB[ !(ApoB$Population %in% "WN-NC"), ]
+
+# add lat
+lat<- read.csv("Population Locations.csv") # read in lat datasheet
+lat<- dplyr::select(lat, Population, Latitude)
+ApoBlat <- join(ApoB, lat, by = c("Population")) # combine lat & apo datasheets
+str(ApoBlat)
+
+# make a col saying Y/N seed production
+for (i in 1:length(ApoBlat$Population)) {
+  if (paste(ApoBlat$Tot.Seed[i])>0) {
+    ApoBlat$SeedYN[i]<- paste("Y")
+  }
+  else
+    ApoBlat$SeedYN[i]<- paste("N")
+}
+
+ApoBlat <- transform(ApoBlat, Population=reorder(Population, Latitude)) 
+```
+
+## Graph of proportion of seed production per pop
+```{r Prop Seed per pop'n}
+library(ggplot2)
+# plot both proportion of seed producers & not seed producers in bargraph, organized by lat
+Seed<- ggplot(ApoBlat,aes(x = Population,fill = SeedYN)) + 
+  geom_bar(position = "fill") +
+  labs(y="Seed Production")+
+  scale_fill_manual(values = c("#C57B57","#041F1E")) +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size=12),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.y = element_text(size=10),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(fill=NA),
+    plot.margin=unit(c(0.5,1,0,0), "cm")
+  )
+```
+
+## Graph of av amount of seed produced per pop'n
+```{r Seed per pop'n}
+ApoBY<- subset(ApoBlat, SeedYN=="Y", na.rm=TRUE) #subset seed producers only
+ApoBY$Num.Inflo.w.Seed # this produces NAs ?????
+seedperinf<-ApoBY$Tot.Seed/ApoBY$Num.Inflo.w.Seed
+
+# boxplot of seed count per pop'n
+SperI<- qplot(x=Population, y=seedperinf, data=ApoBY, geom="boxplot", fill=I("#041F1E"), na.rm=T) + 
+  labs(y="Number of seed per \n seed producing inflorescence") +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size=12),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.y = element_text(size=10),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(fill=NA),
+    plot.margin=unit(c(0.5,1,0,0), "cm")
+  ) 
+```
+
+## seed production per unit length of exp inflo
+
+```{r Seed per unit Inflo}
+seedprod<- read.csv("data/F_Seed_Production.csv")
+str(seedprod)
+seedprodlat<- join(seedprod, lat, by = c("Population"))
+seedprodlat<- transform(seedprodlat, Population=reorder(Population, Latitude)) 
+
+### Not using this one
+qplot(x=Population, y=(num.seed/inflo.length), data=seedprod, geom="boxplot") + 
+  theme_classic()
+histogram(~(num.seed/inflo.length), data=seedprod, type="count")
+```
+
+## criteria for apo
+
+Rate the follow criteria as 1=yes, 0=no. Individuals with a total score of 3 are suspected to be apomictic
+
+Criteria:
+
+  1. More than 1 inflo produced seed
+  2. Seed production > num inflos producing seed (i.e. at least one inflo produced more than 1 seed)
+  3. No reason to suspect contamination (i.e. painted inflo, tie)-> only evaluated on individuals that meet first 2 criteria
+  4. Consistently high production of seed (i.e. more than 3 seed for each inflo)
+
+Using excel, num of individuals suspected of being apomictic = 4
+
+```{r Prob of Apo}
+library(knitr)
+apocrit<- read.csv("Mod_F_Harvestv3.csv")
+str(apocrit)
+
+# make column of scores based on what they got for each criteria
+## A = no prob of apo (i.e. no seed production), D = high prob of apo
+for (i in 1:length(apocrit$Individual)) {
+  if (paste(sum(apocrit$crit1[i],apocrit$crit2[i],apocrit$crit3[i],apocrit$crit4[i]))==0){
+    apocrit$Score[i]<- paste("A") # no seed or on inflo producing seed
+  } else {
+      if (paste(sum(apocrit$crit1[i],apocrit$crit2[i],apocrit$crit3[i],apocrit$crit4[i]))==1){
+    apocrit$Score[i]<- paste("B") # more than one inflo producing seed
+      } else {
+    if (paste(sum(apocrit$crit1[i],apocrit$crit2[i],apocrit$crit3[i],apocrit$crit4[i]))==2){
+    apocrit$Score[i]<- paste("C") # more than one seed on more than one inflo
+    } else {
+    if (paste(sum(apocrit$crit1[i],apocrit$crit2[i],apocrit$crit3[i],apocrit$crit4[i]))==3){
+    apocrit$Score[i]<- paste("D") # no contamination
+    } else {
+      if (paste(sum(apocrit$crit1[i],apocrit$crit2[i],apocrit$crit3[i],apocrit$crit4[i]))==4){
+        apocrit$Score[i]<- paste("E") # high seed production
+      }
+    }
+  }
+  }
+    }
+}
+
+apocrit<- subset(apocrit, Bag=="Y") # remove non-bagged individuals
+# remove these pop'ns b/c small sample size 
+apocrit <- apocrit[ !(apocrit$Population %in% "MA-GA"), ]
+apocrit <- apocrit[ !(apocrit$Population %in% "MR-NC"), ]
+apocrit <- apocrit[ !(apocrit$Population %in% "WN-NC"), ]
+# remove pop'ns where seed was not counted
+apocrit<- apocrit[!is.na(apocrit$Tot.Seed),]
+
+# make a col saying Y/N seed production
+for (i in 1:length(apocrit$Population)) {
+  if (paste(apocrit$Tot.Seed[i])>0) {
+    apocrit$SeedYN[i]<- paste("Y")
+  }
+  else
+    apocrit$SeedYN[i]<- paste("N")
+}
+
+apocritY<- subset(apocrit, SeedYN=="Y")
+
+ggplot(apocritY, aes(x=Population, fill=Score)) +
+  geom_bar(position="fill") +
+  theme_classic()
+```
+
+```{r Combining Graphs}
+apograph1<- ggplot(ApoBlat,aes(x = Population, fill = SeedYN)) + 
+  geom_bar(position = "fill") +
+  labs(y="Seed production in isolation",fill="Seed\nProduction")+
+  scale_fill_manual(values = c("#E0FBFC","#253237"),labels=c("No","Yes")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size=11),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.y = element_text(size=9),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(fill=NA),
+    plot.margin=unit(c(0.5,0,0,0), "cm")
+  )
+
+apograph2<- qplot(x=Population, y=(num.seed/inflo.length), data=seedprod, geom="boxplot", fill=I("#253237"), na.rm=T) + 
+  labs(y="Number of seed per\ncm inflorescence") +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size=11),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.y = element_text(size=9),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(fill=NA),
+    plot.margin=unit(c(0.5,0,0,0), "cm")
+  ) 
+
+apograph3<- ggplot(apocritY, aes(x=Population, fill=Score)) +
+  geom_bar(position="fill") +
+  scale_fill_manual(values = c("#E0FBFC","#C2DFE3","#9DB4C0","#5C6B73","#253237"),labels=c("No Criteria","Criteria 1","Criteria 2","Criteria 3","Criteria 4"))+
+  labs(y="Proportion of individuals", fill="Criteria Met") +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size=11),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.y = element_text(size=9),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(fill=NA),
+    plot.margin=unit(c(0.5,0,0,0), "cm")
+  )
+  
+library(sjPlot)
+library(cowplot)
+prow <- plot_grid(apograph1 + theme(legend.position="none"),
+           apograph2 + theme(legend.position="none"),
+           apograph3 + theme(legend.position="none"),
+           align = 'v',
+           labels = c("A", "B", "C"),
+           hjust = -1,
+           nrow = 3
+           )
+
+legend1<- get_legend(apograph1+theme(legend.justification = "top"))
+legend3<- get_legend(apograph3+theme(legend.justification="bottom"))
+
+p <- plot_grid(prow, legend1, rel_widths = c(3, .5))
+p
+q <- plot_grid(p, legend3, rel_widths = c(3,0))
+q
+```
+
+```{r rough notes}
+ApoBlat$Population
+
+EF<- subset(ApoBlat, Population=="EF-IL")
+nrow(EF) # 12 individuals bagged
+EFY<- subset(EF, SeedYN=="Y")
+nrow(EFY) # 8 individuals produced seed
+max(EFY$Tot.Seed)
+
+EFc<- subset(apocrit, Population=="EF-IL")
+grepl("A",EFc$Score)
+7/8# % of seed producing individuals that meet crit1
+8/12 # % bagged individuals that produce seed
+
+count(EFc$Score=="A") # 7 individuals meet criteria 1
+count(EFc$Score=="B")
+count(EFc$Score=="C")
+count(EFc$Score=="D")
+count(EFc$Score=="E")
+
+mean(EFc$Tot.Seed)
+sum(EFc$Tot.Seed)
+
+WA<- subset(ApoBlat, Population=="WA-NC")
+nrow(WA)
+WAY<- subset(WA, SeedYN=="Y")
+nrow(WAY)
+max(WAY$Tot.Seed)
+7/12 # % bagged individuals that produce seed
+
+WAc<- subset(apocrit, Population=="WA-NC")
+
+count(WAc$Score=="A")
+count(WAc$Score=="B")
+count(WAc$Score=="C")
+count(WAc$Score=="D")
+count(WAc$Score=="E")
+5/7 # % of seed producing individuals that meet crit1
+
+mean(WAc$Tot.Seed)
+sum(WAc$Tot.Seed)
+
+DO<- subset(ApoBlat, Population=="DO-GA")
+nrow(DO)
+grepl("Y",DO$SeedYN)
+
+DOc<- subset(apocrit, Population=="DO-GA")
+grepl("A",DOc$Score)
+sum(DOc$Tot.Seed)
+
+UC<- subset(ApoBlat, Population=="UC-NC")
+nrow(UC)
+grepl("Y",UC$SeedYN)
+5/7
+
+UCc<- subset(apocrit, Population=="UC-NC")
+grepl("A",UCc$Score)
+count(UCc$Score=="A")
+sum(UCc$Tot.Seed)
+4/5
+
+fam<- subset(apocrit, Bag=="Y") %>%
+  group_by(Population, Family)
+
+ApoBY<- subset(ApoBlat, SeedYN=="Y")
+sum(grepl("CH-IL",ApoBY$Population))
+4/7
+ApoBY<- ApoBY[!is.na(ApoBY$Tot.Seed),]
+nrow(ApoBY) #68
+Apo2<- subset(ApoBY, Tot.Seed<=3)
+nrow(Apo2) #32
+32/68
+is.na(ApoBY$Tot.Seed)
+
+# mean seed production
+mean(ApoBY$Tot.Seed)
+```
+Num families, individuals, SeedY, Tot/SeedY%
+CH-IL = 4,5,1,20
+CL-NC = 3,4,1,25
+CO-GA = 2,3,1,33
+DO-GA = 4,4,2,50
+EF-IL = 9,12,8,67
+GL-IL = 5,7,3,43
+HE-IL = 6,7,2,29
+JO-NC = 7,10,4,40
+LB-NC = 5,7,5,71
+LI-NC = 5,5,2,40
+MD-IL = 7,11,7,64
+ON-NC = 4,9,3,33
+PH-NC = 5,6,3,50
+RA-NC = 6,6,4,67
+TA-NC = 6,9,4,44
+UC-NC = 6,7,5,71
+WA-NC = 7,12,7,58
+WL-NC = 6,8,5,63
+WO-GA = 5,7,4,57
+
+## Seed Prod x Lat
+```{r Seed Prod x Lat}
+# total seed production
+Sprodmod<- lm(Tot.Seed~Latitude, data=ApoBlat)
+summary(Sprodmod)
+
+# seed production per unit length
+Slenmod<- lm(num.seed/inflo.length~Latitude, data=seedprodlat)
+summary(Slenmod)
+
+# seed prod YN
+blah<- ApoBlat
+blah$SeedYN<- gsub("Y","1",blah$SeedYN)
+blah$SeedYN<- gsub("N","0",blah$SeedYN)
+Synmod<- lm(SeedYN~Latitude, data=blah)
+summary(Synmod)
+```
+
+```{r}
+
+```
+
